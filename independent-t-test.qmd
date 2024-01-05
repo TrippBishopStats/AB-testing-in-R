@@ -110,9 +110,22 @@ In this example, we would need 64 observations per sample to achieve a power of 
 Remember that it is important to visually inspect the data before running a statistical test. Do the two groups look like they have similar means? Are there weird outliers that could cause problems? If you don't look, you're at the mercy of the data. The test will "do it's thing" regardless of whether the data make any sense, so be sure to plot before running tests.
 
 ```{r}
+
+pepperoni_mean <- mean(pepperoni)
+cheese_mean <- mean(cheese)
+
 df_pizza |> 
   ggplot(aes(x=Topping,y=Time)) +
-  geom_jitter(alpha=0.3)
+  geom_jitter(alpha=0.3) +
+  geom_segment(aes(x="cheese", 
+                   xend="pepperoni", y=cheese_mean, yend=pepperoni_mean), 
+               lineend = "round", 
+               colour="red", 
+               linewidth=1) +
+  geom_point(data=tibble(x=c("cheese", "pepperoni"), y=c(cheese_mean, pepperoni_mean)), 
+             mapping = aes(x=x,y=y),
+             size=3,
+             colour="red")
 ```
 Instead of a t-test, we can also run a linear regression with a categorical variable as the predictor, in this case `Topping`.
 
