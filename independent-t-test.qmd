@@ -78,7 +78,7 @@ cohens_d(Time~Topping, data=df_pizza)
 ```
 This is a very large effect size.
 
-We can use a `power test` to determine how much power a given experiment will have if we know the effect size, sample size, and the significance level.
+We can use a `power test` to determine how much power a given experiment will have if we know the effect size, sample size, and the significance level. **Note**: the significance level to be used comes from the `t.test` run.
 
 ```{r}
 pwr.t.test(n=100,
@@ -95,6 +95,16 @@ pwr.t.test(n=6,
            type="two.sample")
 ```
 We can achieve excellent power with just 6 observations per sample given the massive effect size. Clearly, with a much smaller effect size, we would need much larger sample sizes to have good power.
+
+If we wanted to know how big our sample size should be in order to achieve a specified power, then we would specify the `power` instead of the sample size, `n`.
+
+```{r}
+pwr.t.test(sig.level = 0.05,
+           d=0.5,
+           power=0.8,
+           type="two.sample")
+```
+In this example, we would need 64 observations per sample to achieve a power of 0.8.
 
 ## Visualise the data before running a test like this
 Remember that it is important to visually inspect the data before running a statistical test. Do the two groups look like they have similar means? Are there weird outliers that could cause problems? If you don't look, you're at the mercy of the data. The test will "do it's thing" regardless of whether the data make any sense, so be sure to plot before running tests.
