@@ -1,0 +1,114 @@
+---
+title: "Exploring Independent t-tests in R"
+author: "Tripp Bishop"
+format: html
+---
+
+```{r}
+#| echo: false
+#| message: false
+library(car)
+library(effectsize)
+library(pwr)
+library(tidyverse)
+theme_set(theme_minimal())
+
+pepperoni <- rnorm(100, mean=5.5, sd=0.5)
+cheese <- rnorm(100, mean=7.5, sd=1)
+
+df_pizza <- data.frame(pepperoni,cheese)
+df_pizza <- df_pizza |> 
+  pivot_longer(cols = everything(), names_to = "Topping", values_to = "Time")
+```
+
+The independent t-test is used to determine if the difference of the means of two groups are significantly diffenent. 
+
+## Basic Assumptions of independent t-test
+The independent t-test does make some assumptions about the data. First, it assumes that both samples are drawn from normal distributions. Second, it assumes that the variances of the two populations is equal. The dependent variable must be an interval or ratio where the intervals are equal. The samples must be random.
+
+A histogram is a good way to determine if assumption of normality is reasonable. It can also give you a sense for whether the variances of the two samples is similar.
+```{r}
+df_pizza |> 
+  ggplot(aes(x=Time,fill=Topping)) +
+  geom_histogram(binwidth = 0.5) +
+  facet_wrap(~Topping, nrow = 2, strip.position = "right") +
+  theme(
+    legend.position = "none"
+  )
+
+```
+The *Levene* test can be used to quantitatively test the similarity of variances.
+
+```{r}
+leveneTest(Time~Topping, data=df_pizza)
+```
+The *p*-value will indicate the homogenity of variance. Here, the *p*-value is tiny, which indicates that the assumption of equal variances is a bad one. The the test were not significant, then the assumption would be reasonable. This bears out what the histogram is telling us. The distributions do not look like they have equal variances.
+
+### Running the t-test
+`t.test` is the function used to run the test. We can use a formula to indicate the variables or use the `x` and `y` arguments. We set paired to `FALSE` to indicate that the variables are independent and using `two.sided` for the alternative means that we are not making any assumptions about which variable is larger. Finally, we tell the test about the assumption of variances. Here, `var.equal` is set to `FALSE` because we know that they are not equal.
+
+```{r}
+t.test(Time ~ Topping,
+       data=df_pizza,
+       paired=FALSE,
+       alternative="two.sided",
+       var.equal=FALSE)
+```
+
+### Cohen's d
+Cohen's d is a standard measure of the distance between two means and is a common measure of `effect size`. 
+
+| Cohen's d | Effect Size |
+|-----------|-------------|
+| < 0.2     | Small       |
+| 0.5       | Medium      |
+| > 0.8     | Large       |
+
+The definitions above are not hard and fast and can vary from industry to industry or by academic discipline.
+
+What it measures is how many standard deviations lie between the means. Cohen's d is given by
+
+$$
+d = \frac{|\bar{x} - \bar{y}|}{\sqrt{(s_x + s_y)/2}}.
+$$
+The effect size is always positive.
+
+```{r}
+cohens_d(Time~Topping, data=df_pizza)
+```
+This is a very large effect size.
+
+We can use a `power test` to determine how much power a given experiment will have if we know the effect size, sample size, and the significance level.
+
+```{r}
+pwr.t.test(n=100,
+           sig.level = 0.0182,
+           d=2.43,
+           type="two.sample")
+```
+In this case, we have loads of power because the effect size is so massive. We could use a smaller sample size (less pizza to feed to subjects) to achieve a reasonable power.
+
+```{r}
+pwr.t.test(n=6,
+           sig.level = 0.0182,
+           d=2.43,
+           type="two.sample")
+```
+We can achieve excellent power with just 6 observations per sample given the massive effect size. Clearly, with a much smaller effect size, we would need much larger sample sizes to have good power.
+
+## Visualise the data before running a test like this
+Remember that it is important to visually inspect the data before running a statistical test. Do the two groups look like they have similar means? Are there weird outliers that could cause problems? If you don't look, you're at the mercy of the data. The test will "do it's thing" regardless of whether the data make any sense, so be sure to plot before running tests.
+
+```{r}
+df_pizza |> 
+  ggplot(aes(x=Topping,y=Time)) +
+  geom_jitter(alpha=0.3)
+```
+Instead of a t-test, we can also run a linear regression with a categorical variable as the predictor, in this case `Topping`.
+
+```{r}
+df_pizza |> 
+  lm(Time~Topping, data=_) |> 
+  summary()
+```
+The intercept is the mean of the default category level, in this case cheese. So we can see from the summary that cheese pizzas are devoured, on average, in 7.41 minutes. The estimate for pepperoni pizzas is given relative to the default level, cheese. Here, pepperoni pizzas are eaten 1.99 minutes faster than cheese pizzas. Makes a lot of sense after we look at the jittered scatter plot. We can tell that the effect size is big because the two groups are clearly distinct.
