@@ -4,7 +4,7 @@ author: "Tripp Bishop"
 format: html
 ---
 
-```{r}
+```{r setup}
 #| echo: false
 #| message: false
 library(car)
@@ -27,7 +27,7 @@ The independent t-test is used to determine if the difference of the means of tw
 The independent t-test does make some assumptions about the data. First, it assumes that both samples are drawn from normal distributions. Second, it assumes that the variances of the two populations is equal. The dependent variable must be an interval or ratio where the intervals are equal. The samples must be random.
 
 A histogram is a good way to determine if assumption of normality is reasonable. It can also give you a sense for whether the variances of the two samples is similar.
-```{r}
+```{r histogram of samples}
 df_pizza |> 
   ggplot(aes(x=Time,fill=Topping)) +
   geom_histogram(binwidth = 0.5) +
@@ -39,7 +39,7 @@ df_pizza |>
 ```
 The *Levene* test can be used to quantitatively test the similarity of variances.
 
-```{r}
+```{r Levene test of variances}
 leveneTest(Time~Topping, data=df_pizza)
 ```
 The *p*-value will indicate the homogenity of variance. Here, the *p*-value is tiny, which indicates that the assumption of equal variances is a bad one. The the test were not significant, then the assumption would be reasonable. This bears out what the histogram is telling us. The distributions do not look like they have equal variances.
@@ -47,7 +47,7 @@ The *p*-value will indicate the homogenity of variance. Here, the *p*-value is t
 ### Running the t-test
 `t.test` is the function used to run the test. We can use a formula to indicate the variables or use the `x` and `y` arguments. We set paired to `FALSE` to indicate that the variables are independent and using `two.sided` for the alternative means that we are not making any assumptions about which variable is larger. Finally, we tell the test about the assumption of variances. Here, `var.equal` is set to `FALSE` because we know that they are not equal.
 
-```{r}
+```{r perform t-test}
 t.test(Time ~ Topping,
        data=df_pizza,
        paired=FALSE,
@@ -73,14 +73,14 @@ d = \frac{|\bar{x} - \bar{y}|}{\sqrt{(s_x + s_y)/2}}.
 $$
 The effect size is always positive.
 
-```{r}
+```{r compute effect size}
 cohens_d(Time~Topping, data=df_pizza)
 ```
 This is a very large effect size.
 
 We can use a `power test` to determine how much power a given experiment will have if we know the effect size, sample size, and the significance level. **Note**: the significance level to be used comes from the `t.test` run.
 
-```{r}
+```{r find power given effect size}
 pwr.t.test(n=100,
            sig.level = 0.0182,
            d=2.43,
@@ -88,7 +88,7 @@ pwr.t.test(n=100,
 ```
 In this case, we have loads of power because the effect size is so massive. We could use a smaller sample size (less pizza to feed to subjects) to achieve a reasonable power.
 
-```{r}
+```{r find power of given test}
 pwr.t.test(n=6,
            sig.level = 0.0182,
            d=2.43,
@@ -98,7 +98,7 @@ We can achieve excellent power with just 6 observations per sample given the mas
 
 If we wanted to know how big our sample size should be in order to achieve a specified power, then we would specify the `power` instead of the sample size, `n`.
 
-```{r}
+```{r find sample size with power analysis}
 pwr.t.test(sig.level = 0.05,
            d=0.5,
            power=0.8,
@@ -109,7 +109,7 @@ In this example, we would need 64 observations per sample to achieve a power of 
 ## Visualise the data before running a test like this
 Remember that it is important to visually inspect the data before running a statistical test. Do the two groups look like they have similar means? Are there weird outliers that could cause problems? If you don't look, you're at the mercy of the data. The test will "do it's thing" regardless of whether the data make any sense, so be sure to plot before running tests.
 
-```{r}
+```{r visualise group data}
 
 pepperoni_mean <- mean(pepperoni)
 cheese_mean <- mean(cheese)
@@ -129,7 +129,7 @@ df_pizza |>
 ```
 Instead of a t-test, we can also run a linear regression with a categorical variable as the predictor, in this case `Topping`.
 
-```{r}
+```{r create a linear model}
 df_pizza |> 
   lm(Time~Topping, data=_) |> 
   summary()
