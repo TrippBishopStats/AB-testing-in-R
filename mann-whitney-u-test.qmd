@@ -9,8 +9,11 @@ format: html
 #| message: false
 
 library(tidyverse)
-
+library(effectsize)
+library(pwr)
 theme_set(theme_minimal())
+
+gamedata <- read_csv("data/cookie_cats_subset.csv")
 ```
 
 The Mann-Whitney U test is a non-parametric test. It does not assume that the data have a specific distribution. This test is the non-parametric version of the independent t-test.
@@ -33,3 +36,65 @@ The `rank_biserial` function in the `effectsize` package can be used to compute 
 * Large: 0.5
 
 The `pwr.2p2n.test` function can be used to determine power.
+
+```{r run Mann-Whitney U test}
+wilcox.test(sum_gamerounds ~ version, 
+            data = gamedata)
+```
+The *p*-value is large.
+
+```{r Derive the effect size}
+rank_biserial(sum_gamerounds ~ version, 
+         data = gamedata)
+```
+The effect size is very small. This will require a lot of power to detect with confidence.
+
+```{r run power analysis}
+pwr.2p2n.test(h=0.00672,
+              sig.level = 0.084,
+              n1=1500,
+              n2=1500)
+```
+The power of this particular test is quite small. There is a very high probability of a Type II error in this situation. With such a small effect size, the samples would have to be very large.
+
+$$
+\text{Probability of Type II error} = 1 - \text{Power}\\[0.25cm]
+\text{Probability of Type II error} = 1 - 0.089 = 0.911
+$$
+
+```{r}
+covid <- read_csv("data/covid-dat.csv")
+```
+
+
+```{r}
+# Run an independent t-test assessing time on social media
+t.test(Time.spent.on.social.media ~ Medium.for.online.class, data = covid, var.equal = TRUE)
+
+cohens_d(Time.spent.on.social.media ~ Medium.for.online.class, data = covid)
+
+# Run a power analysis of the t-test
+pwr.t.test(n = 542, sig.level = 0.00652, d = 0.17, type = "two.sample")
+```
+Now, run a Mann-Whitney test on the same data.
+
+```{r}
+wilcox.test(Time.spent.on.social.media ~ Medium.for.online.class, data = covid)
+
+rank_biserial(Time.spent.on.social.media ~ Medium.for.online.class, data = covid)
+```
+Run a power analysis on the Mann-Whitney test.
+
+```{r}
+pwr.2p2n.test(h=0.09,
+              sig.level = 0.0061,
+              n1=542,
+              n2=542)
+```
+
+```{r}
+covid |> ggplot(aes(x=Time.spent.on.social.media)) +
+  geom_histogram() +
+  facet_wrap(~Medium.for.online.class)
+```
+

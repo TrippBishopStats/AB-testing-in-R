@@ -1,0 +1,104 @@
+---
+title: "Chi-square test of Independence"
+author: "Tripp Bishop"
+format: html
+---
+
+```{r}
+#| echo: false
+#| message: false
+
+library(tidyverse)
+library(effectsize)
+library(pwr)
+theme_set(theme_minimal())
+```
+
+
+This test can be used to determine if two categorical variables are independent of each other. Frequency tables are used to count the occurrences of the levels of the variables. The test can be used to determine if a relationship exists but it cannot establish a causal relationship.
+
+The null hypothesis of the chi-square test is that there is no relationship between the two variables and that they are independent. Conversely, the alternate hypothesis is that a relationship exists and that the variables are dependent.
+
+The sample size can be determined using the `pwr.chisq.test` function in the `pwr` package. The effect size is denoted with `w`.
+
+Effect sizes
+* Small: 0.1
+* Medium: 0.3
+* Large: 0.5
+
+You must specify the degrees of freedom when accessing sample size/power or performing a test of independence. To determine the degrees of freedom, `df`, the following equation is used:
+
+$$
+DoF = (\text{Number of levels of variable 1} - 1)*(\text{Number of levels of variable 2} - 1)
+$$
+The `chisq.test` function will perform the test. It can either accept a contingency table or two vectors as input.
+
+```{r}
+#| warning: false
+chics <- table(ChickWeight$Diet, ChickWeight$weight)
+
+# produce the same output
+chisq.test(ChickWeight$Diet, ChickWeight$weight)
+chisq.test(chics)
+```
+The effect size, `w`, can be generated using the `ES.w2` function from the `effectsize` package. This function requires a probability table, which is just a frequency table divided by the sum of its elements.
+
+```{r}
+prob<-matrix(c(0.225,0.125,0.125,0.125,0.16,0.16,0.04,0.04),nrow=2,byrow=TRUE)
+prob
+ES.w2(prob)
+```
+We can then compute power with the `pwr.chisq.test` function.
+
+```{r}
+pwr.chisq.test(w=ES.w2(prob),df=(2-1)*(4-1),N=200)
+```
+
+The degrees of freedom are calculated from the dimensions of the probability table which is 2x4. $(2-1)*(4-1) = 3$ degrees of freedom. The analysis shows that with a sample size of 200, the is only a 0.13 (1-0.87) probability of making a Type II error so the power is good.
+
+```{r}
+pwr.chisq.test(w=ES.w2(prob),df=(2-1)*(4-1),power = 0.9)
+```
+We can also specify a desired power level and determine the sample size required to achieve the desired power. In this case, with a desired power of 0.9 we will need 217 observations in our sample.
+
+## Examples
+
+The Chi-Square test of independence can be used to assess whether the A/B grouping is related to the dependent variable. It has a different sample size function than that of t-tests and a Mann-Whitney U test.
+
+You will be assessing the previous `gamedata` dataset. In each of the two game versions, whether the subject returned to the game after seven days was also recorded as `TRUE` or `FALSE`. Therefore, the Chi-Square test of independence will assess whether the two conditions of the version variable and two conditions of the return variable are related.
+
+```{r}
+glimpse(gamedata)
+
+table(gamedata$version, gamedata$retention_7)
+```
+Determine the sample size needed for a Chi-square test of independence with a desired effect size of 0.50, power of 0.80, and alpha of 0.05.
+
+Our degrees of freedom for this test will 1 because there are two levels for each categorical variable. $df=(2-1)*(2-1) = 1$.
+
+```{r}
+pwr.chisq.test(w=0.5, power=0.8, df=1)
+```
+This analysis indicates that we will need 32 observations in our sample.
+
+Create a frequency table called `freqtbl` of the `retention_7` and `version` columns in the `gamedata` dataset and run a chi-square test of independence.
+
+```{r}
+freqtbl <- table(gamedata$version, gamedata$retention_7)
+chisq.test(freqtbl)
+```
+
+Use `freqtbl` to create a `probtbl` table of the probabilities to derive the effect size.
+
+```{r}
+probtbl <- freqtbl/sum(freqtbl)
+ES.w2(probtbl)
+```
+The effect size is very small.
+
+Run a power analysis on the Chi-Square test of independence using the effect size `w`, rounded to four decimal places, and a significance level of 0.0050; the total number of observations is 44000.
+
+```{r}
+pwr.chisq.test(w=0.0095, df=1, sig.level = 0.0050, N=44000)
+```
+Because the effect size is small, this test will not have much power. There is an 80% chance of committing a Type II error and failing to reject the null hypothesis when we should do.
