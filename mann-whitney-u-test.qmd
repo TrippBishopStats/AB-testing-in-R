@@ -93,6 +93,7 @@ pwr.2p2n.test(h=0.09,
 ```
 
 ```{r}
+#| message: false
 covid |> ggplot(aes(x=Time.spent.on.social.media)) +
   geom_histogram() +
   facet_wrap(~Medium.for.online.class)
