@@ -13,8 +13,23 @@ library(tidyverse)
 theme_set(theme_minimal())
 ```
 
-Description of test here.
+The Mann-Whitney U test is a non-parametric test. It does not assume that the data have a specific distribution. This test is the non-parametric version of the independent t-test.
 
-## Basic Assumptions of Mann-Whitney U Test
+## Overview of the test
+The Mann-Whitney U Test makes the following makes the assumption that the two samples have the same distribution shape (ex. both bell-shaped and left-skewed). It compares the medians of the samples. This is appropriate when the underlying distributions are not symmetric.
 
+The independent t-test is more powerful when its assumptions are met, but when they are not, a non-parametric test like Mann-Whitney is has more power.
 
+The null hypothesis of the Mann-Whitney U test is that there is no difference in the  medians of the two samples.
+
+## Approach
+Use histograms to assess the shape of the sample distributions to determine if a non-parametric test would be a good choice.
+
+## Effect size and power
+The `rank_biserial` function in the `effectsize` package can be used to compute the effect size of the Mann-Whitney U test. Generic effect size values for this test are
+
+* Small: 0.1
+* Medium: 0.3
+* Large: 0.5
+
+The `pwr.2p2n.test` function can be used to determine power.
