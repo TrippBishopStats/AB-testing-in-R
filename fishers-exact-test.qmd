@@ -1,0 +1,55 @@
+---
+title: "Fisher's Exact Test"
+author: "Tripp Bishop"
+format: html
+---
+
+```{r setup}
+#| echo: false
+#| message: false
+
+library(tidyverse)
+library(effectsize)
+library(pwr)
+theme_set(theme_minimal())
+
+gamedata <- read_csv("data/cookie_cats_subset.csv")
+subgame <- gamedata |> 
+  filter(sum_gamerounds >= 545)
+```
+
+
+Fisher's Exact test is another non-parametric test that can be used to test for relationships between groups in data. It is a good alternative to the Chi-square test when
+
+* The sample size is < 1000 observations
+* The frequency is < 5 for 20% or more of the group comparisons
+
+## Effect size
+The effect size for Fisher's Exact test is the odds ratio of the groups. 
+
+* Small: 1.5
+* Medium: 2.5
+* Large: 4
+
+The odds ratio is reported by `fisher.test` in R.
+
+## Considerations
+Fisher's Exact test is computationally expensive so if there are many groups in the data, it may be prohibitive to run. The advantage of Fisher's over Chi-square is that it provides an exact *p*-value rather than an approximations like Chi-square does.
+
+## Examples
+
+Fisher's Exact test is easy in R.
+```{r}
+freqtbl <- table(subgame$version, subgame$retention_7)
+fisher.test(freqtbl)
+```
+
+The odds ratio in the output is used as the effect size. To compute the power of the test, the `pwr.2p.test` function can be used.
+
+```{r}
+pwr.2p.test(h=1.2535,
+		   n=331,
+		   sig.level=0.05)
+```
+
+
